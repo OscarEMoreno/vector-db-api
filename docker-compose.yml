@@ -1,0 +1,18 @@
+services:
+  api:
+    build: .
+    image: vector-db-api
+    ports:
+      - "8000:8000"
+    environment:
+      REPO_TYPE: json
+      JSON_PATH: /app/data.json
+      PICKLE_PATH: /app/data.pkl
+      SQLITE_PATH: /app/data.db
+      PORT: "8000"
+    volumes:
+      - ./:/app:rw
+    command:
+      - sh
+      - -c
+      - uvicorn app.main:app --host 0.0.0.0 --port $$PORT --reload

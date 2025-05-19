@@ -1,0 +1,8 @@
+fastapi>=0.85.0
+uvicorn[standard]>=0.18.0
+pydantic>=1.10.0
+numpy>=1.23.0
+readerwriterlock>=1.0.9
+requests>=2.28.0
+pytest>=7.1.0
+httpx>=0.23.0

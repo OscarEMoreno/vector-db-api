@@ -1,0 +1,65 @@
+
+# Vector-DB API (FastAPI )
+
+**Goal**: Provide a REST API to index & kNN-query document chunks in a vector database.
+
+---
+
+## Features
+
+- **CRUD** for Libraries & Chunks  
+- **Three** indexing algorithms *(KD-Tree, Ball-Tree, Linear Scan)*  
+- **Metadata Filtering** in searches  
+- **JSON-on-disk Persistence** for state across restarts  
+- _Stubs_ for Leader-Follower replication & Python SDK  
+- Docker
+
+---
+
+## DDD Layers
+
+1. **Domain** (`domain/models.py`)  
+   - Pydantic models: `Library`, `Document`, `Chunk`  
+   - Enforces fixed schemas, strong typing
+
+2. **Repository** (`infrastructure/repositories.py`)  
+   - `LibraryRepository` handles in-memory + JSON persistence  
+   - Uses `threading.Lock` for atomicity  
+
+3. **Services** (`application/services.py`)  
+   - Business logic: CRUD, indexing, metadata-filtering  
+   - Dispatches among `KDTree`, `BallTree`, `LinearIndex`  
+   - Returns domain objects or raises `ValueError`
+
+4. **API / Interface** (`app/main.py`)  
+   - FastAPI controllers, Pydantic DTOs (`app/schemas.py`)  
+
+
+## Persistence Trade-offs
+
+| Option   | Performance         | Consistency   | Durability         | Notes                                      |
+|----------|---------------------|---------------|--------------------|--------------------------------------------|
+| **JSON** | Moderate (<1MB)     | Good          | Good               | Full file rewrite each write               |
+| **Pickle**| Fastest (binary)   | Good          | Good               | Python-only format                        |
+| **SQLite**| High (WAL mode)    | ACID          | Excellent          | Concurrent reads, SQL queries possible     |
+
+---
+
+
+## Getting Started
+
+# Build image
+docker-compose build
+
+# Run 
+docker-compose uo
+
+
+Then, access http://0.0.0.0:8000/docs for documentation
+
+
+
+Or you can use virtual environment to run further testing:
+**venv install**  
+   python3 -m venv .venv && source .venv/bin/activate
+   pip install -r requirements.txt
