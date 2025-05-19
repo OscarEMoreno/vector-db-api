@@ -52,14 +52,16 @@
 docker-compose build
 
 # Run 
-docker-compose uo
+docker-compose up
 
 
 Then, access http://0.0.0.0:8000/docs for documentation
 
+# Run Tests
+docker-compose run --rm api pytest -q
 
 
-Or you can use virtual environment to run further testing:
-**venv install**  
+You can use virtual environment to run further testing:
+**venv install**
    python3 -m venv .venv && source .venv/bin/activate
    pip install -r requirements.txt
