@@ -11,7 +11,7 @@
 - **Three** indexing algorithms *(KD-Tree, Ball-Tree, Linear Scan)*  
 - **Metadata Filtering** in searches  
 - **JSON-on-disk Persistence** for state across restarts  
-- _Stubs_ for Leader-Follower replication & Python SDK  
+- Stubs for Leader-Follower replication & Python SDK  
 - Docker
 
 ---
@@ -22,11 +22,11 @@
    - Pydantic models: `Library`, `Document`, `Chunk`  
    - Enforces fixed schemas, strong typing
 
-2. **Repository** (`infrastructure/repositories.py`)  
+2. **Repository** (`infrastructure/repositories/`)  
    - `LibraryRepository` handles in-memory + JSON persistence  
    - Uses `threading.Lock` for atomicity  
 
-3. **Services** (`application/services.py`)  
+3. **Services** (`app/services.py`)  
    - Business logic: CRUD, indexing, metadata-filtering  
    - Dispatches among `KDTree`, `BallTree`, `LinearIndex`  
    - Returns domain objects or raises `ValueError`

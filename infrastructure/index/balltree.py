@@ -1,73 +1,100 @@
 import numpy as np
+from typing import List, Tuple, Optional, Union
+from dataclasses import dataclass
+import heapq
+from .base import BaseIndex, IndexType
 
 
+@dataclass
 class BallNode:
-    def __init__(self, points_idx, center, radius, left=None, right=None):
-        self.points_idx = points_idx
-        self.center = center
-        self.radius = radius
-        self.left = left
-        self.right = right
+    points_idx: np.ndarray
+    center: np.ndarray
+    radius: float
+    left: Optional['BallNode'] = None
+    right: Optional['BallNode'] = None
 
 
-class BallTree:
+class BallTree(BaseIndex):
     """
     Build: O(n log n)
     Query: average O(log n)
     """
 
-    def __init__(self, data):
+    def __init__(
+        self, 
+        data: List[List[float]], 
+        leaf_size: int = 40, 
+        **kwargs
+    ) -> None:
+        self.data = np.array(data, dtype=np.float32)
+        self.leaf_size = leaf_size
+        self.root = self._build(np.arange(len(data)))
 
-        data = np.array(data, dtype=float)
-        self.data = data
+    def _build(
+        self, 
+        idxs: np.ndarray
+    ) -> Optional[BallNode]:
+        if len(idxs) == 0:
+            return None
+            
+        if len(idxs) <= self.leaf_size:
+            points = self.data[idxs]
+            center = np.mean(points, axis=0)
+            radius = np.max(np.linalg.norm(points - center, axis=1))
+            return BallNode(idxs, center, radius)
 
-        def build(idxs):
-            pts = [data[i] for i in idxs]
-            center = np.mean(pts, axis=0)
-            radius = max(np.linalg.norm(p - center) for p in pts)
-            if len(idxs) <= 1:
-                return BallNode(idxs, center, radius)
-            # pick two farthest points to split
-            a, b = max(
-                ((i, j) for i in idxs for j in idxs if i < j),
-                key=lambda pair: (
-                    np.linalg.norm(data[pair[0]] - center)
-                    + np.linalg.norm(data[pair[1]] - center)
-                )
-            )
-            left_idxs = [
-                i for i in idxs
-                if np.linalg.norm(data[i] - data[a]) < np.linalg.norm(data[i] - data[b])
-            ]
-            right_idxs = [i for i in idxs if i not in left_idxs]
-            return BallNode(idxs, center, radius, build(left_idxs), build(right_idxs))
+        points = self.data[idxs]
+        var = np.var(points, axis=0)
+        split_dim = np.argmax(var)
+        median_idx = len(idxs) // 2
+        partition_idx = np.argpartition(points[:, split_dim], median_idx)
+        left_idxs = idxs[partition_idx[:median_idx]]
+        right_idxs = idxs[partition_idx[median_idx:]]
+        center = np.mean(points, axis=0)
+        radius = np.max(np.linalg.norm(points - center, axis=1))
+        
+        return BallNode(
+            points_idx=idxs,
+            center=center,
+            radius=radius,
+            left=self._build(left_idxs),
+            right=self._build(right_idxs)
+        )
 
-        self.root = build(list(range(len(data))))
-
-    def nearest(self, target, k=1):
-        target = np.array(target, dtype=float)
-        data = self.data
-        best: list[tuple[float, int]] = []
-
-        def search(node):
+    def nearest(
+        self, 
+        target: Union[List[float], np.ndarray], 
+        k: int = 1
+    ) -> List[IndexType]:
+        target = np.array(target, dtype=np.float32)
+        heap: List[Tuple[float, IndexType]] = []
+        
+        def search(node: Optional[BallNode]) -> None:
             if node is None:
                 return
-            dist_center = np.linalg.norm(target - node.center)
-
-            if len(best) == k and dist_center - node.radius > best[-1][0]:
+                
+            dist_to_center = np.linalg.norm(target - node.center)
+            if len(heap) == k and dist_to_center - node.radius > -heap[0][0]:
                 return
-
-            for idx in node.points_idx:
-                d = np.linalg.norm(target - data[idx])
-                best.append((d, idx))
-
-            # keep only the top‐k
-            best.sort(key=lambda x: x[0])
-            if len(best) > k:
-                best[:] = best[:k]
-
-            search(node.left)
-            search(node.right)
-
+            
+            points = self.data[node.points_idx]
+            dists = np.linalg.norm(points - target, axis=1)
+            for dist, idx in zip(dists, node.points_idx):
+                if len(heap) < k:
+                    heapq.heappush(heap, (-dist, idx))
+                elif -dist > heap[0][0]:
+                    heapq.heapreplace(heap, (-dist, idx))
+            if node.left and node.right:
+                left_dist = np.linalg.norm(target - node.left.center)
+                right_dist = np.linalg.norm(target - node.right.center)
+                if left_dist < right_dist:
+                    search(node.left)
+                    search(node.right)
+                else:
+                    search(node.right)
+                    search(node.left)
+            else:
+                search(node.left)
+                search(node.right)
         search(self.root)
-        return [idx for _, idx in best]
+        return [idx for _, idx in sorted(heap, reverse=True)]

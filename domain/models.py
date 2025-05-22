@@ -1,6 +1,6 @@
 from uuid import UUID
 from typing import List, Dict, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class Chunk(BaseModel):
@@ -9,8 +9,7 @@ class Chunk(BaseModel):
     embedding: List[float]
     metadata: Dict[str, Any]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class Document(BaseModel):
@@ -19,8 +18,7 @@ class Document(BaseModel):
     chunks: List[Chunk]
     metadata: Dict[str, Any]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class Library(BaseModel):
@@ -29,5 +27,4 @@ class Library(BaseModel):
     documents: List[Document]
     metadata: Dict[str, Any]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

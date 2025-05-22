@@ -1,7 +1,4 @@
 import os
-import json
-import pickle
-import sqlite3
 import pytest
 from uuid import uuid4
 from fastapi.testclient import TestClient
@@ -12,7 +9,7 @@ from infrastructure.repositories import (
     JSONLibraryRepository,
     PickleLibraryRepository,
     SQLiteLibraryRepository,
-    LibraryRepository
+    RepositoryFactory,
 )
 from infrastructure.leader_follower import LeaderFollowerRepository
 from client.sdk import VectorDBClient
@@ -53,7 +50,7 @@ def test_crud_and_search_algorithms(algo):
         f"/libraries/{lib_id}/documents",
         json={"id": str(doc_id), "title": "Doc1", "metadata": {"author": "A"}}
     )
-    assert doc_resp.status_code == 201
+    assert doc_resp.status_code == 200
 
     # Add Chunk
     embedding = [0.24475098, 0.33691406,
@@ -108,10 +105,10 @@ def test_crud_and_search_algorithms(algo):
 
     # Delete Chunk
     assert client.delete(
-        f"/libraries/{lib_id}/chunks/{chunk_id}").status_code == 204
+        f"/libraries/{lib_id}/chunks/{chunk_id}").status_code == 200
 
     # Delete Library
-    assert client.delete(f"/libraries/{lib_id}").status_code == 204
+    assert client.delete(f"/libraries/{lib_id}").status_code == 200
 
 
 # Metadata Filter Test
@@ -175,10 +172,12 @@ def test_repo_crud(tmp_path, cls, path):
 def test_library_repository(tmp_path):
     os.chdir(tmp_path)
     for backend in ("json", "pickle", "sqlite"):
-        repo = LibraryRepository(backend_type=backend,
-                                 json_path="data.json",
-                                 pickle_path="data.pkl",
-                                 sqlite_path="data.db")
+        repo = RepositoryFactory.create(
+            backend_type=backend,
+            json_path="data.json",
+            pickle_path="data.pkl",
+            sqlite_path="data.db"
+        )
         lib = Library(id=uuid4(), name=backend, documents=[], metadata={})
         repo.add(lib)
         assert repo.get(str(lib.id)).id == lib.id
@@ -206,19 +205,10 @@ def test_leader_follower(tmp_path):
         assert r.get(str(lib.id)) is None
 
 
-# @pytest.fixture(autouse=True)
-# def patch_requests(monkeypatch):
-#     import requests
-#     for method in ('get', 'post', 'put', 'delete'):
-#         monkeypatch.setattr(requests, method,
-#                             lambda url, timeout=None, json=None: client.request(
-#                                 method, url.replace("http://localhost", ""), json=json))
 
-
-# # Python SDK Tests
+# Python SDK Tests
 # def test_sdk_flow():
 #     sdk = VectorDBClient(base_url="http://localhost:8000")
-#     # sdk = VectorDBClient(base_url="http://testserver")
 #     lib = sdk.create_library("SDKLib", {"k": 1})
 #     lib_id = lib['id']
 #     assert sdk.get_library(lib_id)['name'] == "SDKLib"

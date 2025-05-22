@@ -1,0 +1,16 @@
+from abc import ABC, abstractmethod
+from typing import List, Optional
+from domain.models import Library
+
+
+class BaseLibraryRepository(ABC):
+    @abstractmethod
+    def add(self, lib: Library) -> Library: ...
+    @abstractmethod
+    def get(self, lib_id: str) -> Optional[Library]: ...
+    @abstractmethod
+    def update(self, lib: Library) -> Library: ...
+    @abstractmethod
+    def delete(self, lib_id: str) -> None: ...
+    @abstractmethod
+    def list_all(self) -> List[Library]: ... 

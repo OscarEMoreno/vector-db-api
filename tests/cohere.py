@@ -34,8 +34,8 @@ def embed_texts_via_http(
 
 
 if __name__ == "__main__":
-    os.environ["COHERE_API_KEY"] = "<insert_api_key_here>"
+    # os.environ["COHERE_API_KEY"] = "<insert_api_key_here>"
     samples = ["Hello world", "How are you?"]
     vectors = embed_texts_via_http(samples)
     for text, vec in zip(samples, vectors):
-        print(text, "→", vec[:5], "...")
+        print(text, "->", vec[:5], "...")

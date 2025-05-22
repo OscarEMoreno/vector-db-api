@@ -10,31 +10,6 @@ class LibraryCreate(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class DocumentRead(BaseModel):
-    id: UUID
-    title: str
-    metadata: Dict[str, Any]
-
-    model_config = {"from_attributes": True}
-
-
-class LibraryRead(BaseModel):
-    id: UUID
-    name: str
-    metadata: Dict[str, Any]
-    documents: List[DocumentRead]
-
-    model_config = {"from_attributes": True}
-
-
-class ChunkRead(BaseModel):
-    id: UUID
-    text: str
-    embedding: List[float]
-    metadata: Dict[str, Any]
-
-    model_config = {"from_attributes": True}
-
 
 class DocumentCreate(BaseModel):
     id: UUID

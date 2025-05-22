@@ -1,7 +1,6 @@
-import time
-from typing import Any, Dict, List, Optional
-from uuid import UUID
 import requests
+from uuid import UUID
+from typing import Any, Dict, List, Optional
 from requests.exceptions import HTTPError, JSONDecodeError
 
 
@@ -77,7 +76,6 @@ class VectorDBClient:
 
     def _request(self, method: str, path: str, **kwargs) -> Any:
         url = self.base + path
-        # print(url, method, path)
         for attempt in range(3):
             resp = getattr(requests, method)(
                 url, timeout=self.timeout, **kwargs)
