@@ -11,6 +11,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+RUN pip install -e .
+
 ENV REPO_TYPE=${REPO_TYPE:-json} \
     JSON_PATH=${JSON_PATH:-data.json} \
     PICKLE_PATH=${PICKLE_PATH:-data.pkl} \

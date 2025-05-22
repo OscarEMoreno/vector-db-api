@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vector-db-api"
+version = "0.1.0"
+description = "Vector database API with multiple index implementations"
+requires-python = ">=3.8"
+authors = [
+    {name = "om"}
+]
+
+[tool.setuptools.packages.find]
+include = ["app*", "utils*", "domain*", "infrastructure*"] 

@@ -7,8 +7,8 @@ from .base import BaseIndex, IndexType
 
 @dataclass
 class KDNode:
-    point: np.ndarray
-    idx: IndexType
+    points: np.ndarray
+    indices: np.ndarray
     axis: int
     left: Optional['KDNode'] = None
     right: Optional['KDNode'] = None
@@ -41,24 +41,22 @@ class KDTree(BaseIndex):
         if len(idxs) == 0:
             return None
             
-        if len(idxs) <= self.leaf_size:
-            point = np.mean(self.data[idxs], axis=0)
-            return KDNode(point=point, idx=idxs[0], axis=depth % self.dimensions)
-
         points = self.data[idxs]
+        
+        if len(idxs) <= self.leaf_size:
+            return KDNode(points=points, indices=idxs, axis=depth % self.dimensions)
+
         axis = self._select_axis(points, depth)
         median_idx = len(idxs) // 2
+        
         partition_idx = np.argpartition(points[:, axis], median_idx)
-        mid_idx = partition_idx[median_idx]
-        mid_point = points[mid_idx]
-        left_mask = partition_idx < median_idx
-        right_mask = partition_idx > median_idx
-        left_idxs = idxs[partition_idx[left_mask]]
-        right_idxs = idxs[partition_idx[right_mask]]
-
+        left_idxs = idxs[partition_idx[:median_idx]]
+        right_idxs = idxs[partition_idx[median_idx + 1:]]
+        median_idx_actual = partition_idx[median_idx]
+        
         return KDNode(
-            point=mid_point,
-            idx=idxs[mid_idx],
+            points=points[median_idx_actual:median_idx_actual+1],
+            indices=idxs[median_idx_actual:median_idx_actual+1],
             axis=axis,
             left=self._build(left_idxs, depth + 1),
             right=self._build(right_idxs, depth + 1)
@@ -79,18 +77,24 @@ class KDTree(BaseIndex):
         def search(node: Optional[KDNode]) -> None:
             if node is None:
                 return
-            dist = squared_distance(target, node.point)
-            if len(heap) < k:
-                heapq.heappush(heap, (-dist, node.idx))
-            elif -dist > heap[0][0]:
-                heapq.heapreplace(heap, (-dist, node.idx))
-            axis_dist = target[node.axis] - node.point[node.axis]
+            for point, idx in zip(node.points, node.indices):
+                dist = np.sqrt(squared_distance(target, point))
+                if len(heap) < k:
+                    heapq.heappush(heap, (-dist, idx))
+                elif -dist > heap[0][0]:
+                    heapq.heapreplace(heap, (-dist, idx))
+            
+            if node.left is None and node.right is None:
+                return
+            axis_dist = target[node.axis] - node.points[0][node.axis]
             if axis_dist < 0:
                 first, second = node.left, node.right
             else:
                 first, second = node.right, node.left
+                
             search(first)
             if len(heap) < k or axis_dist * axis_dist < -heap[0][0]:
                 search(second)
+                
         search(self.root)
         return [idx for _, idx in sorted(heap, reverse=True)]

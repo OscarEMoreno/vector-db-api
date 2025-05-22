@@ -48,6 +48,9 @@
 
 ## Getting Started
 
+Add COHERE_API_KEY to a .env file in the root of the project
+
+
 # Build image
 docker-compose build
 
