@@ -28,7 +28,7 @@ class ChunkCreate(BaseModel):
     metadata: Dict[str, Any]
 
     # @field_validator("embedding")
-    # def check_embedding_length(cls, v):
+    # def check_embedding_length(cls, v: List[float]) -> List[float]:
     #     if len(v) not in (64, 128, 256):
     #         raise ValueError("Embedding must be length 64, 128, or 256")
     #     return v
@@ -45,7 +45,6 @@ class ChunkUpdate(BaseModel):
 
     @model_validator(mode="after")
     def at_least_one_field(cls, m: "ChunkUpdate") -> "ChunkUpdate":
-        print(m)
         if m.text is None and m.embedding is None and m.metadata is None:
             raise ValueError("At least one field must be provided")
         return m
@@ -62,9 +61,15 @@ class SearchRequest(BaseModel):
     metadata_filter: Optional[Dict[str, Any]] = None
 
     @field_validator("algorithm")
-    def valid_algorithm(cls, v):
+    def valid_algorithm(cls, v: str) -> str:
         if v not in ("kd", "ball", "linear"):
             raise ValueError("algorithm must be one of: kd, ball, linear")
+        return v
+
+    @field_validator("k")
+    def valid_k(cls, v: int) -> int:
+        if v < 1:
+            raise ValueError("k must be greater than 0")
         return v
 
     model_config = {

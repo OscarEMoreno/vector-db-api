@@ -4,10 +4,11 @@ from typing import List, Dict, Any, Optional
 from domain.models import Library, Document, Chunk
 from infrastructure.index.factory import IndexFactory
 from utils.pagination import paginate
+from infrastructure.repositories.base import BaseLibraryRepository
 
 
 class LibraryService:
-    def __init__(self, repo) -> None:
+    def __init__(self, repo: BaseLibraryRepository) -> None:
         self.repo = repo
 
     def create_library(

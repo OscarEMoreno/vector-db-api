@@ -40,7 +40,6 @@ class KDTree(BaseIndex):
     def _build(self, idxs: np.ndarray, depth: int) -> Optional[KDNode]:
         if len(idxs) == 0:
             return None
-            
         points = self.data[idxs]
         
         if len(idxs) <= self.leaf_size:

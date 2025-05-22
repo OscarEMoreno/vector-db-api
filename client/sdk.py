@@ -28,26 +28,42 @@ class VectorDBClient:
         title: str,
         metadata: Dict[str, Any],
     ) -> Dict[str, Any]:
-
         return self._request(
             'post',
             f"/libraries/{lib_id}/documents",
             json={"id": str(doc_id), "title": title, "metadata": metadata},
         )
 
-    def add_chunk(self, lib_id: str, doc_id: UUID, text: str,
-                  embedding: List[float], metadata: Dict[str, Any]) -> Dict[str, Any]:
-        return self._request('post', f'/libraries/{lib_id}/chunks',
-                             json={"doc_id": str(doc_id), "text": text,
-                                   "embedding": embedding, "metadata": metadata})
+    def add_chunk(
+        self,
+        lib_id: str,
+        doc_id: UUID,
+        text: str,
+        embedding: List[float],
+        metadata: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        return self._request(
+            'post',
+            f'/libraries/{lib_id}/chunks',
+            json={
+                "doc_id": str(doc_id),
+                "text": text,
+                "embedding": embedding,
+                "metadata": metadata
+            }
+        )
 
     def get_chunks(self, lib_id: str) -> List[Dict[str, Any]]:
         return self._request('get', f'/libraries/{lib_id}/chunks')
 
-    def update_chunk(self, lib_id: str, chunk_id: UUID,
-                     text: Optional[str] = None,
-                     embedding: Optional[List[float]] = None,
-                     metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def update_chunk(
+        self,
+        lib_id: str,
+        chunk_id: UUID,
+        text: Optional[str] = None,
+        embedding: Optional[List[float]] = None,
+        metadata: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         payload: Dict[str, Any] = {}
         if text is not None:
             payload['text'] = text
@@ -57,7 +73,7 @@ class VectorDBClient:
             payload['metadata'] = metadata
         return self._request('put', f'/libraries/{lib_id}/chunks/{chunk_id}', json=payload)
 
-    def delete_chunk(self, lib_id: str, chunk_id: UUID) -> None:
+    def delete_chunk(self, lib_id: str, chunk_id: UUID) -> Any:
         return self._request('delete', f'/libraries/{lib_id}/chunks/{chunk_id}')
 
     def search(
@@ -68,24 +84,17 @@ class VectorDBClient:
         algorithm: str = "kd",
         metadata_filter: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
-
         body = {"embedding": embedding, "k": k, "algorithm": algorithm}
         if metadata_filter:
             body['metadata_filter'] = metadata_filter
         return self._request('post', f'/libraries/{lib_id}/search', json=body)['results']
 
-    def _request(self, method: str, path: str, **kwargs) -> Any:
-        url = self.base + path
-        for attempt in range(3):
-            resp = getattr(requests, method)(
-                url, timeout=self.timeout, **kwargs)
-            resp.raise_for_status()
-            try:
-                return resp.json()
-            except Exception as e:
-                raise e
-
-    def _request(self, method: str, path: str, json: Dict[str, Any] = None) -> Any:
+    def _request(
+        self,
+        method: str,
+        path: str,
+        json: Optional[Dict[str, Any]] = None
+    ) -> Any:
         url = self.base + path
         resp = getattr(requests, method)(url, json=json, timeout=self.timeout)
         try:
